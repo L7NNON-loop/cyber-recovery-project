@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, database } from "@/lib/firebase";
+import { ref, get, update } from "firebase/database";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
@@ -19,7 +20,29 @@ const Login = () => {
     setLoading(true);
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Adicionar ao histórico de login
+      const userRef = ref(database, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        const loginHistory = userData.loginHistory || [];
+        
+        loginHistory.push({
+          timestamp: new Date().toISOString(),
+          ip: "N/A",
+          device: navigator.userAgent
+        });
+        
+        await update(userRef, {
+          loginHistory: loginHistory,
+          lastLogin: new Date().toISOString()
+        });
+      }
+      
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao MozBots",
