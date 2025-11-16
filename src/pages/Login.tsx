@@ -23,12 +23,20 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Adicionar ao histórico de login
+      // Verificar status do usuário
       const userRef = ref(database, `users/${user.uid}`);
       const snapshot = await get(userRef);
       
       if (snapshot.exists()) {
         const userData = snapshot.val();
+        
+        // Verificar se o usuário está ativo
+        if (userData.statususer !== "ativo" || userData.criadouser !== "true") {
+          await auth.signOut();
+          navigate('/user-disabled');
+          return;
+        }
+        
         const loginHistory = userData.loginHistory || [];
         
         loginHistory.push({
