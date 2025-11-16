@@ -42,13 +42,6 @@ const Dashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "profile":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground">Perfil</h2>
-            <p className="text-muted-foreground">Em desenvolvimento...</p>
-          </div>
-        );
       case "bots":
         return (
           <div className="space-y-6">
@@ -89,14 +82,14 @@ const Dashboard = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-card border-2 border-primary/30 rounded-full shadow-lg px-4 py-3">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-card border border-primary/20 rounded-lg shadow-lg px-3 py-2.5">
         <div className="flex items-center justify-around">
           <button
             onClick={() => setActiveTab("home")}
-            className={`flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all ${
               activeTab === "home" 
                 ? "bg-primary text-primary-foreground" 
-                : "text-muted-foreground hover:text-primary"
+                : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
             }`}
           >
             <Home className="w-5 h-5" />
@@ -105,10 +98,10 @@ const Dashboard = () => {
 
           <button
             onClick={() => setActiveTab("bots")}
-            className={`flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all ${
               activeTab === "bots" 
                 ? "bg-primary text-primary-foreground" 
-                : "text-muted-foreground hover:text-primary"
+                : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
             }`}
           >
             <Bot className="w-5 h-5" />
@@ -116,12 +109,8 @@ const Dashboard = () => {
           </button>
 
           <button
-            onClick={() => setActiveTab("profile")}
-            className={`flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
-              activeTab === "profile" 
-                ? "bg-primary text-primary-foreground" 
-                : "text-muted-foreground hover:text-primary"
-            }`}
+            onClick={() => navigate('/profile')}
+            className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all text-muted-foreground hover:text-primary hover:bg-secondary/50"
           >
             <User className="w-5 h-5" />
             <span className="text-xs font-medium">Perfil</span>
