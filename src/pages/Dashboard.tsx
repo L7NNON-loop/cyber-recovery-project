@@ -188,9 +188,21 @@ const Dashboard = () => {
               Voltar
             </button>
             <h2 className="text-lg font-bold text-foreground">Manual dos 100x</h2>
-            <div className="bg-card border border-border rounded-lg p-4">
-              <p className="text-sm text-muted-foreground">PDF será disponibilizado em breve.</p>
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <iframe 
+                src="/manual-100x.pdf" 
+                className="w-full h-[70vh] border-0"
+                title="Manual dos 100x"
+                style={{
+                  filter: 'contrast(1.1)',
+                }}
+              />
             </div>
+            <style>{`
+              iframe img {
+                border-radius: 6px !important;
+              }
+            `}</style>
           </div>
         );
       default:
@@ -226,7 +238,7 @@ const Dashboard = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-card border border-primary/20 rounded-lg shadow-lg px-2 py-2">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg px-4 py-3 z-50">
         <div className="flex items-center justify-around">
           <button
             onClick={() => setActiveTab("home")}
