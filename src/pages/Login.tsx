@@ -30,6 +30,18 @@ const Login = () => {
       if (snapshot.exists()) {
         const userData = snapshot.val();
         
+        // Verificar se os dados essenciais existem
+        if (!userData || !userData.username || !userData.email) {
+          await auth.signOut();
+          toast({
+            title: "Conta incompleta",
+            description: "Sua conta não possui dados válidos. Contacte o suporte.",
+            variant: "destructive",
+          });
+          navigate('/');
+          return;
+        }
+        
         // Verificar se o usuário está ativo
         if (userData.statususer !== "ativo" || userData.criadouser !== "true") {
           await auth.signOut();
