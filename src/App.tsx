@@ -10,7 +10,6 @@ import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import UserDisabled from "./pages/UserDisabled";
-import AdminPanel from "./pages/AdminPanel";
 import ForgotPassword from "./pages/ForgotPassword";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -31,7 +30,6 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/user-disabled" element={<UserDisabled />} />
-        <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
