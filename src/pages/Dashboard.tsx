@@ -26,7 +26,29 @@ const Dashboard = () => {
         const userRef = ref(database, `users/${user.uid}`);
         const snapshot = await get(userRef);
         if (snapshot.exists()) {
-          setUserData(snapshot.val());
+          const data = snapshot.val();
+          
+          // Verificar se os dados essenciais existem
+          if (!data.username || !data.subscriptionExpiry) {
+            await auth.signOut();
+            toast({
+              title: "Login Desabilitado",
+              description: "Contacte o suporte.",
+              variant: "destructive",
+            });
+            navigate('/login');
+            return;
+          }
+          
+          setUserData(data);
+        } else {
+          await auth.signOut();
+          toast({
+            title: "Login Desabilitado",
+            description: "Contacte o suporte.",
+            variant: "destructive",
+          });
+          navigate('/login');
         }
       } catch (error) {
         toast({
@@ -189,20 +211,24 @@ const Dashboard = () => {
             </button>
             <h2 className="text-lg font-bold text-foreground">Manual dos 100x</h2>
             <div className="bg-card border border-border rounded-lg overflow-hidden">
-              <iframe 
-                src="/manual-100x.pdf" 
-                className="w-full h-[70vh] border-0"
-                title="Manual dos 100x"
+              <object 
+                data="/manual-100x.pdf#toolbar=1&navpanes=0&scrollbar=1" 
+                type="application/pdf"
+                className="w-full h-[75vh]"
                 style={{
-                  filter: 'contrast(1.1)',
+                  borderRadius: '6px',
                 }}
-              />
+              >
+                <embed 
+                  src="/manual-100x.pdf#toolbar=1&navpanes=0&scrollbar=1" 
+                  type="application/pdf"
+                  className="w-full h-[75vh]"
+                  style={{
+                    borderRadius: '6px',
+                  }}
+                />
+              </object>
             </div>
-            <style>{`
-              iframe img {
-                border-radius: 6px !important;
-              }
-            `}</style>
           </div>
         );
       default:
