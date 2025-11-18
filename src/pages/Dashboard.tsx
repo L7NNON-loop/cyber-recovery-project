@@ -249,15 +249,57 @@ const Dashboard = () => {
           </div>
         );
       default:
+        const calculateTimeLeft = () => {
+          if (!userData?.subscriptionExpiry) return null;
+          const difference = new Date(userData.subscriptionExpiry).getTime() - new Date().getTime();
+          if (difference <= 0) return null;
+          
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+          
+          return { days, hours, minutes, seconds };
+        };
+
+        const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+        useEffect(() => {
+          const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+          }, 1000);
+          return () => clearInterval(timer);
+        }, [userData]);
+
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-foreground">Bem-vindo ao MozBots</h2>
             {userData && (
               <div className="bg-card border border-border rounded-lg p-4">
                 <p className="text-sm text-foreground">Olá, <span className="text-primary font-semibold">{userData.username}</span>!</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Seu acesso expira em: {new Date(userData.subscriptionExpiry).toLocaleDateString('pt-MZ')}
-                </p>
+                {timeLeft && (
+                  <div className="mt-3">
+                    <p className="text-xs text-muted-foreground mb-2">Tempo restante de acesso:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="bg-background rounded-lg p-2 text-center">
+                        <div className="text-lg font-bold text-primary">{timeLeft.days}</div>
+                        <div className="text-[10px] text-muted-foreground">Dias</div>
+                      </div>
+                      <div className="bg-background rounded-lg p-2 text-center">
+                        <div className="text-lg font-bold text-primary">{timeLeft.hours}</div>
+                        <div className="text-[10px] text-muted-foreground">Horas</div>
+                      </div>
+                      <div className="bg-background rounded-lg p-2 text-center">
+                        <div className="text-lg font-bold text-primary">{timeLeft.minutes}</div>
+                        <div className="text-[10px] text-muted-foreground">Min</div>
+                      </div>
+                      <div className="bg-background rounded-lg p-2 text-center">
+                        <div className="text-lg font-bold text-primary">{timeLeft.seconds}</div>
+                        <div className="text-[10px] text-muted-foreground">Seg</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

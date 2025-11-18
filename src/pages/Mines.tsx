@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, database } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bomb, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ const Mines = () => {
   const [countdown, setCountdown] = useState(0);
   const [grid, setGrid] = useState<boolean[]>(Array(25).fill(false));
   const [revealed, setRevealed] = useState(false);
+  const [isPredicting, setIsPredicting] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -60,22 +61,28 @@ const Mines = () => {
   const handlePredict = () => {
     if (countdown > 0) return;
 
-    // Gerar grid aleatório com o número de minas selecionado
-    const newGrid = Array(25).fill(false);
-    const minePositions = new Set<number>();
-    
-    while (minePositions.size < selectedMines) {
-      const pos = Math.floor(Math.random() * 25);
-      minePositions.add(pos);
-    }
+    setIsPredicting(true);
+    setRevealed(false);
 
-    minePositions.forEach(pos => {
-      newGrid[pos] = true;
-    });
+    setTimeout(() => {
+      // Gerar grid aleatório com o número de minas selecionado
+      const newGrid = Array(25).fill(false);
+      const minePositions = new Set<number>();
+      
+      while (minePositions.size < selectedMines) {
+        const pos = Math.floor(Math.random() * 25);
+        minePositions.add(pos);
+      }
 
-    setGrid(newGrid);
-    setRevealed(true);
-    setCountdown(30);
+      minePositions.forEach(pos => {
+        newGrid[pos] = true;
+      });
+
+      setGrid(newGrid);
+      setRevealed(true);
+      setIsPredicting(false);
+      setCountdown(30);
+    }, 1200);
   };
 
   if (loading) {
@@ -98,14 +105,17 @@ const Mines = () => {
           Voltar
         </Button>
 
-        <div className="bg-card border border-border rounded-lg p-6 space-y-6">
-          <h1 className="text-3xl font-bold text-center text-primary mb-6">
-            Bot de Mines
-          </h1>
+        <div className="bg-card border border-border rounded-lg p-6 space-y-6 shadow-lg">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Bot de Mines
+            </h1>
+            <p className="text-xs text-muted-foreground">Sistema de Previsão Avançado</p>
+          </div>
 
           {/* Seletor de minas */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-foreground block text-center">
               Quantidade de Minas
             </label>
             <div className="flex gap-3 justify-center">
@@ -114,7 +124,11 @@ const Mines = () => {
                   key={num}
                   variant={selectedMines === num ? "default" : "outline"}
                   onClick={() => setSelectedMines(num)}
-                  className="w-20"
+                  disabled={isPredicting || countdown > 0}
+                  className={cn(
+                    "w-20 h-12 text-lg font-bold transition-all",
+                    selectedMines === num && "ring-2 ring-primary/50"
+                  )}
                 >
                   {num}
                 </Button>
@@ -123,37 +137,63 @@ const Mines = () => {
           </div>
 
           {/* Grid de Mines */}
-          <div className="grid grid-cols-5 gap-2 p-4 bg-background rounded-lg">
-            {grid.map((isMine, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "aspect-square rounded-md border-2 transition-all duration-300 flex items-center justify-center text-lg font-bold",
-                  revealed
-                    ? isMine
-                      ? "bg-destructive/20 border-destructive"
-                      : "bg-primary/20 border-primary"
-                    : "bg-muted border-border"
-                )}
-              >
-                {revealed && (isMine ? "💣" : "💎")}
+          <div className="relative">
+            {isPredicting && (
+              <div className="absolute inset-0 z-30 bg-background/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <div className="text-center space-y-3">
+                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-sm font-medium text-primary">Analisando padrões...</p>
+                </div>
               </div>
-            ))}
+            )}
+            <div className="grid grid-cols-5 gap-2 p-4 bg-gradient-to-br from-background to-muted/20 rounded-xl border border-border/50 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-slide-in-right" />
+              {grid.map((isMine, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "aspect-square rounded-lg border-2 transition-all duration-500 flex items-center justify-center relative overflow-hidden",
+                    "shadow-md hover:shadow-lg",
+                    revealed
+                      ? isMine
+                        ? "bg-gradient-to-br from-destructive/30 to-destructive/10 border-destructive animate-fade-in"
+                        : "bg-gradient-to-br from-primary/30 to-primary/10 border-primary animate-fade-in"
+                      : "bg-gradient-to-br from-muted to-muted/50 border-border hover:border-primary/30"
+                  )}
+                  style={{ animationDelay: `${index * 20}ms` }}
+                >
+                  {revealed && (
+                    isMine ? (
+                      <Bomb className="w-6 h-6 text-destructive animate-scale-in" />
+                    ) : (
+                      <Gem className="w-6 h-6 text-primary animate-scale-in" />
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Botão Prever */}
           <Button
             onClick={handlePredict}
-            disabled={countdown > 0}
-            className="w-full h-12 text-lg font-semibold"
+            disabled={countdown > 0 || isPredicting}
+            className={cn(
+              "w-full h-14 text-lg font-semibold transition-all shadow-lg",
+              countdown > 0 ? "bg-muted" : "bg-gradient-to-r from-primary to-primary/80 hover:shadow-primary/50"
+            )}
           >
-            {countdown > 0 ? `Aguarde ${countdown}s` : "Prever"}
+            {isPredicting ? (
+              <span className="flex items-center gap-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Prevendo...
+              </span>
+            ) : countdown > 0 ? (
+              `Aguarde ${countdown}s`
+            ) : (
+              "Prever Posições"
+            )}
           </Button>
-
-          {/* Texto de conexão */}
-          <p className="text-center text-xs text-muted-foreground opacity-60">
-            conectado elephantbet através de api/F*****#ga*****
-          </p>
         </div>
       </div>
     </div>
