@@ -5,6 +5,7 @@ import { ref, get } from "firebase/database";
 import { Home, User, Bot, Trophy, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { strategies } from "@/data/strategies";
+import { PDFViewer } from "@/components/PDFViewer";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -201,7 +202,7 @@ const Dashboard = () => {
         );
       case "manual-100x":
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 h-[calc(100vh-180px)]">
             <button
               onClick={() => setActiveTab("estrategia")}
               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
@@ -210,24 +211,8 @@ const Dashboard = () => {
               Voltar
             </button>
             <h2 className="text-lg font-bold text-foreground">Manual dos 100x</h2>
-            <div className="bg-card border border-border rounded-lg overflow-hidden">
-              <object 
-                data="/manual-100x.pdf#toolbar=1&navpanes=0&scrollbar=1" 
-                type="application/pdf"
-                className="w-full h-[75vh]"
-                style={{
-                  borderRadius: '6px',
-                }}
-              >
-                <embed 
-                  src="/manual-100x.pdf#toolbar=1&navpanes=0&scrollbar=1" 
-                  type="application/pdf"
-                  className="w-full h-[75vh]"
-                  style={{
-                    borderRadius: '6px',
-                  }}
-                />
-              </object>
+            <div className="h-[calc(100%-60px)]">
+              <PDFViewer fileUrl="/manual-100x.pdf" />
             </div>
           </div>
         );
