@@ -6,6 +6,10 @@ import { Home, User, Bot, Trophy, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { strategies } from "@/data/strategies";
 import { PDFViewer } from "@/components/PDFViewer";
+import { BotCard } from "@/components/BotCard";
+import cyberHacker from "@/assets/cyber-hacker.png";
+import aviatorBot from "@/assets/aviator-bot.webp";
+import minesBot from "@/assets/mines-bot.webp";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -40,6 +44,16 @@ const Dashboard = () => {
             navigate('/login');
             return;
           }
+
+          // Verificar expiração e status
+          const expiryDate = new Date(data.subscriptionExpiry);
+          const now = new Date();
+
+          if (expiryDate <= now || data.statususer === false) {
+            await auth.signOut();
+            navigate('/access-expired');
+            return;
+          }
           
           setUserData(data);
         } else {
@@ -69,9 +83,27 @@ const Dashboard = () => {
     switch (activeTab) {
       case "bots":
         return (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Bots</h2>
-            <p className="text-sm text-muted-foreground">Em desenvolvimento...</p>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-center text-foreground">Escolha seu Bot</h2>
+            <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+              <BotCard 
+                image={cyberHacker}
+                title="Cyber Hacker"
+                route="/aviator1"
+              />
+              <BotCard 
+                image={aviatorBot}
+                title="Hacker Aviator Bets"
+                route="/aviator2"
+              />
+            </div>
+            <div className="max-w-xs mx-auto">
+              <BotCard 
+                image={minesBot}
+                title="Bot de Mines"
+                route="/mines"
+              />
+            </div>
           </div>
         );
       case "estrategia":

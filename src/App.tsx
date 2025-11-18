@@ -12,6 +12,10 @@ import Profile from "./pages/Profile";
 import UserDisabled from "./pages/UserDisabled";
 import ForgotPassword from "./pages/ForgotPassword";
 import Admin from "./pages/Admin";
+import Aviator1 from "./pages/Aviator1";
+import Aviator2 from "./pages/Aviator2";
+import Mines from "./pages/Mines";
+import AccessExpired from "./pages/AccessExpired";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,10 +32,14 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/user-disabled" element={<UserDisabled />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/user-disabled" element={<UserDisabled />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/aviator1" element={<Aviator1 />} />
+          <Route path="/aviator2" element={<Aviator2 />} />
+          <Route path="/mines" element={<Mines />} />
+          <Route path="/access-expired" element={<AccessExpired />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
