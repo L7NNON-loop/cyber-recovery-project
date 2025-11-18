@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 interface BotCardProps {
   image: string;
@@ -9,6 +10,16 @@ interface BotCardProps {
 
 export const BotCard = ({ image, title, route }: BotCardProps) => {
   const navigate = useNavigate();
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 1000);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="relative group">
@@ -19,7 +30,7 @@ export const BotCard = ({ image, title, route }: BotCardProps) => {
             alt={title}
             className="w-full h-full object-cover relative z-10"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-20" />
+          <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent ${isAnimating ? 'animate-slide-in-right' : '-translate-x-full'} transition-transform duration-1000 z-20`} />
         </div>
         <Button
           onClick={() => navigate(route)}
