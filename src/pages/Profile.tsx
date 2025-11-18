@@ -34,7 +34,19 @@ const Profile = () => {
         const userRef = ref(database, `users/${user.uid}`);
         const snapshot = await get(userRef);
         if (snapshot.exists()) {
-          setUserData(snapshot.val());
+          const data = snapshot.val();
+          
+          // Verificar expiração e status
+          const expiryDate = new Date(data.subscriptionExpiry);
+          const now = new Date();
+
+          if (expiryDate <= now || data.statususer === false) {
+            await auth.signOut();
+            navigate('/access-expired');
+            return;
+          }
+          
+          setUserData(data);
         }
       } catch (error) {
         toast({

@@ -42,8 +42,17 @@ const Login = () => {
           return;
         }
         
-        // Verificar se o usuário está ativo
-        if (userData.statususer !== "ativo" || userData.criadouser !== "true") {
+        // Verificar se o usuário está ativo e não expirado
+        const expiryDate = new Date(userData.subscriptionExpiry);
+        const now = new Date();
+        
+        if (expiryDate <= now) {
+          await auth.signOut();
+          navigate('/access-expired');
+          return;
+        }
+        
+        if (userData.statususer === false || userData.criadouser !== "true") {
           await auth.signOut();
           navigate('/user-disabled');
           return;

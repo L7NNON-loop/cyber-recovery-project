@@ -78,6 +78,22 @@ const Admin = () => {
       
       if (snapshot.exists()) {
         const usersData = snapshot.val();
+        const now = new Date();
+        
+        // Verificar e desativar usuários expirados
+        for (const uid in usersData) {
+          const user = usersData[uid];
+          if (user.subscriptionExpiry) {
+            const expiryDate = new Date(user.subscriptionExpiry);
+            if (expiryDate <= now && user.statususer !== false) {
+              await update(ref(database, `users/${uid}`), {
+                statususer: false
+              });
+              usersData[uid].statususer = false;
+            }
+          }
+        }
+        
         const usersList = Object.keys(usersData).map(uid => ({
           uid,
           ...usersData[uid]
@@ -110,7 +126,7 @@ const Admin = () => {
         subscriptionExpiry: expirationDate.toISOString(),
         subscriptionDays: newUser.subscriptionDays,
         createdAt: new Date().toISOString(),
-        statususer: "ativo",
+        statususer: true,
         criadouser: "true",
         paymentAmount: 350,
         transactionId: "ADMIN_CREATED",
@@ -141,16 +157,16 @@ const Admin = () => {
     }
   };
 
-  const handleToggleStatus = async (uid: string, currentStatus: string) => {
+  const handleToggleStatus = async (uid: string, currentStatus: any) => {
     try {
-      const newStatus = currentStatus === "ativo" ? "desativado" : "ativo";
+      const newStatus = currentStatus ? false : true;
       await update(ref(database, `users/${uid}`), {
         statususer: newStatus
       });
 
       toast({
         title: "Status atualizado!",
-        description: `Usuário ${newStatus === "ativo" ? "ativado" : "desativado"} com sucesso`,
+        description: `Usuário ${newStatus ? "ativado" : "desativado"} com sucesso`,
       });
       loadUsers();
     } catch (error: any) {
@@ -173,6 +189,7 @@ const Admin = () => {
         expirationDate.setDate(expirationDate.getDate() + editData.subscriptionDays);
         updates.subscriptionExpiry = expirationDate.toISOString();
         updates.subscriptionDays = editData.subscriptionDays;
+        updates.statususer = true; // Reativar ao renovar
       }
 
       await update(ref(database, `users/${uid}`), updates);
