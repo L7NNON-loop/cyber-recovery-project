@@ -19,6 +19,21 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
 
+  const calculateTimeLeft = () => {
+    if (!userData?.subscriptionExpiry) return null;
+    const difference = new Date(userData.subscriptionExpiry).getTime() - new Date().getTime();
+    if (difference <= 0) return null;
+    
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    
+    return { days, hours, minutes, seconds };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
@@ -78,6 +93,13 @@ const Dashboard = () => {
 
     fetchUserData();
   }, [navigate, toast]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [userData]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -249,28 +271,6 @@ const Dashboard = () => {
           </div>
         );
       default:
-        const calculateTimeLeft = () => {
-          if (!userData?.subscriptionExpiry) return null;
-          const difference = new Date(userData.subscriptionExpiry).getTime() - new Date().getTime();
-          if (difference <= 0) return null;
-          
-          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-          
-          return { days, hours, minutes, seconds };
-        };
-
-        const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-        useEffect(() => {
-          const timer = setInterval(() => {
-            setTimeLeft(calculateTimeLeft());
-          }, 1000);
-          return () => clearInterval(timer);
-        }, [userData]);
-
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-foreground">Bem-vindo ao MozBots</h2>
