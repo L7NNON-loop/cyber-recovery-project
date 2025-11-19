@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, database } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
-import { ArrowLeft, Bomb, Gem } from "lucide-react";
+import { Bomb, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 const Mines = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const Mines = () => {
   const [grid, setGrid] = useState<boolean[]>(Array(25).fill(false));
   const [revealed, setRevealed] = useState(false);
   const [isPredicting, setIsPredicting] = useState(false);
+  const [maintenance, setMaintenance] = useState<any>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -39,6 +41,13 @@ const Mines = () => {
         if (expiryDate <= now || userData.statususer === false) {
           navigate("/access-expired");
           return;
+        }
+
+        // Check maintenance status
+        const maintenanceRef = ref(database, "maintenance/mines");
+        const maintenanceSnapshot = await get(maintenanceRef);
+        if (maintenanceSnapshot.exists() && maintenanceSnapshot.val().enabled) {
+          setMaintenance(maintenanceSnapshot.val());
         }
 
         setLoading(false);
@@ -93,18 +102,20 @@ const Mines = () => {
     );
   }
 
+  if (maintenance?.enabled) {
+    return (
+      <MaintenanceOverlay
+        reason={maintenance.reason}
+        message={maintenance.message}
+        endTime={maintenance.endTime}
+        imageUrl={maintenance.imageUrl}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/dashboard")}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
-
         <div className="bg-card border border-border rounded-lg p-6 space-y-6 shadow-lg">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">

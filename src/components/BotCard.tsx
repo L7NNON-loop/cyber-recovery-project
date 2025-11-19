@@ -21,10 +21,12 @@ export const BotCard = ({ image, title, route }: BotCardProps) => {
     return () => clearInterval(interval);
   }, []);
 
+  const isMinesBot = title.toLowerCase().includes("mines");
+
   return (
     <div className="relative group">
       <div className="bg-card border border-border rounded-lg p-4 hover:border-primary transition-all duration-300 overflow-hidden">
-        <div className="relative w-full aspect-square mb-4 overflow-hidden rounded-md">
+        <div className={`relative w-full ${isMinesBot ? 'aspect-[4/3]' : 'aspect-square'} mb-4 overflow-hidden rounded-md`}>
           <img
             src={image}
             alt={title}
