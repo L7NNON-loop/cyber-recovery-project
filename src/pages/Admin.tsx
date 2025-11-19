@@ -4,11 +4,15 @@ import { Input } from "@/components/ui/input";
 import { database } from "@/lib/firebase";
 import { ref, get, set, update } from "firebase/database";
 import { useToast } from "@/hooks/use-toast";
-import { Search, UserPlus, Edit2, Ban, CheckCircle, Shield, ArrowLeft } from "lucide-react";
+import { Search, UserPlus, Edit2, Ban, CheckCircle, Shield, ArrowLeft, Wrench, Palette } from "lucide-react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { validateAdminCode } from "@/lib/auth-config";
 import { useNavigate } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface User {
   uid: string;
@@ -47,11 +51,110 @@ const Admin = () => {
     subscriptionDays: 0
   });
 
+  // Maintenance state
+  const [showMaintenance, setShowMaintenance] = useState(false);
+  const [maintenanceData, setMaintenanceData] = useState({
+    enabled: false,
+    target: "aviator2", // aviator1, aviator2, mines, all
+    reason: "Melhorias no Sistema",
+    message: "Estamos realizando manutenções para melhorar sua experiência.",
+    endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+    imageUrl: ""
+  });
+
+  // Customization state
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [customFont, setCustomFont] = useState({
+    enabled: false,
+    fontFamily: "Inter"
+  });
+
   useEffect(() => {
     if (isAuthenticated) {
       loadUsers();
+      loadMaintenanceSettings();
+      loadCustomization();
     }
   }, [isAuthenticated]);
+
+  const loadMaintenanceSettings = async () => {
+    try {
+      const maintenanceRef = ref(database, "maintenance");
+      const snapshot = await get(maintenanceRef);
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        // Load the most recent maintenance config
+        if (data.aviator2) setMaintenanceData(prev => ({ ...prev, ...data.aviator2, target: "aviator2" }));
+      }
+    } catch (error) {
+      console.error("Error loading maintenance:", error);
+    }
+  };
+
+  const loadCustomization = async () => {
+    try {
+      const customRef = ref(database, "customization");
+      const snapshot = await get(customRef);
+      if (snapshot.exists()) {
+        setCustomFont(snapshot.val().font || customFont);
+      }
+    } catch (error) {
+      console.error("Error loading customization:", error);
+    }
+  };
+
+  const handleSaveMaintenance = async () => {
+    try {
+      const targets = maintenanceData.target === "all" 
+        ? ["aviator1", "aviator2", "mines"] 
+        : [maintenanceData.target];
+
+      for (const target of targets) {
+        await set(ref(database, `maintenance/${target}`), {
+          enabled: maintenanceData.enabled,
+          reason: maintenanceData.reason,
+          message: maintenanceData.message,
+          endTime: maintenanceData.endTime,
+          imageUrl: maintenanceData.imageUrl
+        });
+      }
+
+      toast({
+        title: "Manutenção Atualizada",
+        description: `Configurações salvas para ${maintenanceData.target}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar configurações",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveCustomization = async () => {
+    try {
+      await set(ref(database, "customization/font"), customFont);
+      
+      // Apply font to document
+      if (customFont.enabled) {
+        document.documentElement.style.fontFamily = customFont.fontFamily;
+      } else {
+        document.documentElement.style.fontFamily = "";
+      }
+
+      toast({
+        title: "Customização Salva",
+        description: "Fonte personalizada atualizada",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar customização",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
@@ -368,7 +471,163 @@ const Admin = () => {
               </form>
             </div>
           )}
+
+          {/* Maintenance Section */}
+          <Card className="p-6 bg-card/80 backdrop-blur-sm">
+            <Button
+              onClick={() => setShowMaintenance(!showMaintenance)}
+              variant="outline"
+              className="w-full justify-start mb-4"
+            >
+              <Wrench className="w-4 h-4 mr-2" />
+              Gerenciar Manutenção
+            </Button>
+
+            {showMaintenance && (
+              <div className="space-y-4 mt-4">
+                <Separator />
+                
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Status da Manutenção</label>
+                    <Button
+                      variant={maintenanceData.enabled ? "destructive" : "default"}
+                      size="sm"
+                      onClick={() => setMaintenanceData({ ...maintenanceData, enabled: !maintenanceData.enabled })}
+                    >
+                      {maintenanceData.enabled ? "Desativar" : "Ativar"}
+                    </Button>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Aplicar Em:</label>
+                    <Select
+                      value={maintenanceData.target}
+                      onValueChange={(value) => setMaintenanceData({ ...maintenanceData, target: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="aviator1">Robô Cyber Hacker</SelectItem>
+                        <SelectItem value="aviator2">Hacker Aviator Bets</SelectItem>
+                        <SelectItem value="mines">Mines Bot</SelectItem>
+                        <SelectItem value="all">Todo o Site (exceto Admin)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Motivo</label>
+                    <Input
+                      value={maintenanceData.reason}
+                      onChange={(e) => setMaintenanceData({ ...maintenanceData, reason: e.target.value })}
+                      placeholder="Ex: Melhorias no Sistema"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Mensagem</label>
+                    <Textarea
+                      value={maintenanceData.message}
+                      onChange={(e) => setMaintenanceData({ ...maintenanceData, message: e.target.value })}
+                      placeholder="Mensagem detalhada para os usuários"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Data/Hora de Retorno</label>
+                    <Input
+                      type="datetime-local"
+                      value={maintenanceData.endTime.slice(0, 16)}
+                      onChange={(e) => setMaintenanceData({ ...maintenanceData, endTime: new Date(e.target.value).toISOString() })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">URL da Imagem (opcional)</label>
+                    <Input
+                      value={maintenanceData.imageUrl}
+                      onChange={(e) => setMaintenanceData({ ...maintenanceData, imageUrl: e.target.value })}
+                      placeholder="URL da imagem do robô"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleSaveMaintenance}
+                    className="w-full bg-primary hover:bg-primary/90"
+                  >
+                    Salvar Configurações de Manutenção
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Customization Section */}
+          <Card className="p-6 bg-card/80 backdrop-blur-sm">
+            <Button
+              onClick={() => setShowCustomization(!showCustomization)}
+              variant="outline"
+              className="w-full justify-start mb-4"
+            >
+              <Palette className="w-4 h-4 mr-2" />
+              Customização Visual
+            </Button>
+
+            {showCustomization && (
+              <div className="space-y-4 mt-4">
+                <Separator />
+                
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Fonte Personalizada</label>
+                    <Button
+                      variant={customFont.enabled ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCustomFont({ ...customFont, enabled: !customFont.enabled })}
+                    >
+                      {customFont.enabled ? "Ativada" : "Desativada"}
+                    </Button>
+                  </div>
+
+                  {customFont.enabled && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Família da Fonte</label>
+                      <Select
+                        value={customFont.fontFamily}
+                        onValueChange={(value) => setCustomFont({ ...customFont, fontFamily: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Inter">Inter (Padrão)</SelectItem>
+                          <SelectItem value="Roboto">Roboto</SelectItem>
+                          <SelectItem value="Poppins">Poppins</SelectItem>
+                          <SelectItem value="Montserrat">Montserrat</SelectItem>
+                          <SelectItem value="Open Sans">Open Sans</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleSaveCustomization}
+                    className="w-full bg-primary hover:bg-primary/90"
+                  >
+                    Salvar Customização
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
         </div>
+
+        <Separator className="my-6" />
+
+        <h2 className="text-xl font-bold text-foreground mb-4">Gerenciar Usuários</h2>
 
         <div className="space-y-3">
           {filteredUsers.map((user) => (

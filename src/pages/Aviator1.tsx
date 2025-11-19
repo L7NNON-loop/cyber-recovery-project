@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, database } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 const Aviator1 = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [maintenance, setMaintenance] = useState<any>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,6 +35,13 @@ const Aviator1 = () => {
           return;
         }
 
+        // Check maintenance status
+        const maintenanceRef = ref(database, "maintenance/aviator1");
+        const maintenanceSnapshot = await get(maintenanceRef);
+        if (maintenanceSnapshot.exists() && maintenanceSnapshot.val().enabled) {
+          setMaintenance(maintenanceSnapshot.val());
+        }
+
         setLoading(false);
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
@@ -53,17 +60,20 @@ const Aviator1 = () => {
     );
   }
 
+  if (maintenance?.enabled) {
+    return (
+      <MaintenanceOverlay
+        reason={maintenance.reason}
+        message={maintenance.message}
+        endTime={maintenance.endTime}
+        imageUrl={maintenance.imageUrl}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/dashboard")}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
         <h1 className="text-3xl font-bold text-foreground mb-8">
           Robô Cyber Hacker
         </h1>
