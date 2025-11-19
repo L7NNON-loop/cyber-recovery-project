@@ -38,8 +38,11 @@ const Aviator1 = () => {
         // Check maintenance status
         const maintenanceRef = ref(database, "maintenance/aviator1");
         const maintenanceSnapshot = await get(maintenanceRef);
-        if (maintenanceSnapshot.exists() && maintenanceSnapshot.val().enabled) {
-          setMaintenance(maintenanceSnapshot.val());
+        if (maintenanceSnapshot.exists()) {
+          const maintenanceConfig = maintenanceSnapshot.val();
+          if (maintenanceConfig.enabled === true) {
+            setMaintenance(maintenanceConfig);
+          }
         }
 
         setLoading(false);

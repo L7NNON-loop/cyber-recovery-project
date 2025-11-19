@@ -64,9 +64,20 @@ const Admin = () => {
 
   // Customization state
   const [showCustomization, setShowCustomization] = useState(false);
-  const [customFont, setCustomFont] = useState({
-    enabled: false,
-    fontFamily: "Inter"
+  const [customization, setCustomization] = useState({
+    font: {
+      enabled: false,
+      fontFamily: "Inter",
+      fontSize: "medium"
+    },
+    colors: {
+      enabled: false,
+      primaryColor: "#8B5CF6",
+      accentColor: "#10B981"
+    },
+    theme: {
+      defaultMode: "dark"
+    }
   });
 
   useEffect(() => {
@@ -96,7 +107,22 @@ const Admin = () => {
       const customRef = ref(database, "customization");
       const snapshot = await get(customRef);
       if (snapshot.exists()) {
-        setCustomFont(snapshot.val().font || customFont);
+        setCustomization(snapshot.val() || customization);
+        
+        // Apply customizations
+        const data = snapshot.val();
+        if (data.font?.enabled) {
+          document.documentElement.style.fontFamily = data.font.fontFamily;
+          if (data.font.fontSize === "small") {
+            document.documentElement.style.fontSize = "14px";
+          } else if (data.font.fontSize === "large") {
+            document.documentElement.style.fontSize = "18px";
+          }
+        }
+        if (data.colors?.enabled) {
+          document.documentElement.style.setProperty('--primary', data.colors.primaryColor);
+          document.documentElement.style.setProperty('--accent', data.colors.accentColor);
+        }
       }
     } catch (error) {
       console.error("Error loading customization:", error);
@@ -134,18 +160,35 @@ const Admin = () => {
 
   const handleSaveCustomization = async () => {
     try {
-      await set(ref(database, "customization/font"), customFont);
+      await set(ref(database, "customization"), customization);
       
       // Apply font to document
-      if (customFont.enabled) {
-        document.documentElement.style.fontFamily = customFont.fontFamily;
+      if (customization.font.enabled) {
+        document.documentElement.style.fontFamily = customization.font.fontFamily;
+        if (customization.font.fontSize === "small") {
+          document.documentElement.style.fontSize = "14px";
+        } else if (customization.font.fontSize === "large") {
+          document.documentElement.style.fontSize = "18px";
+        } else {
+          document.documentElement.style.fontSize = "16px";
+        }
       } else {
         document.documentElement.style.fontFamily = "";
+        document.documentElement.style.fontSize = "";
+      }
+      
+      // Apply colors
+      if (customization.colors.enabled) {
+        document.documentElement.style.setProperty('--primary', customization.colors.primaryColor);
+        document.documentElement.style.setProperty('--accent', customization.colors.accentColor);
+      } else {
+        document.documentElement.style.removeProperty('--primary');
+        document.documentElement.style.removeProperty('--accent');
       }
 
       toast({
         title: "Customização Salva",
-        description: "Fonte personalizada atualizada",
+        description: "Alterações visuais aplicadas com sucesso",
       });
     } catch (error) {
       toast({
@@ -580,44 +623,169 @@ const Admin = () => {
               <div className="space-y-4 mt-4">
                 <Separator />
                 
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Fonte Personalizada</label>
-                    <Button
-                      variant={customFont.enabled ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCustomFont({ ...customFont, enabled: !customFont.enabled })}
-                    >
-                      {customFont.enabled ? "Ativada" : "Desativada"}
-                    </Button>
+                <div className="grid gap-6">
+                  {/* Font Customization */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold">🔤 Fonte Personalizada</label>
+                      <Button
+                        variant={customization.font.enabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCustomization({ 
+                          ...customization, 
+                          font: { ...customization.font, enabled: !customization.font.enabled }
+                        })}
+                      >
+                        {customization.font.enabled ? "Ativada" : "Desativada"}
+                      </Button>
+                    </div>
+
+                    {customization.font.enabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Família da Fonte</label>
+                          <Select
+                            value={customization.font.fontFamily}
+                            onValueChange={(value) => setCustomization({ 
+                              ...customization, 
+                              font: { ...customization.font, fontFamily: value }
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Inter">Inter (Padrão)</SelectItem>
+                              <SelectItem value="Roboto">Roboto</SelectItem>
+                              <SelectItem value="Poppins">Poppins</SelectItem>
+                              <SelectItem value="Montserrat">Montserrat</SelectItem>
+                              <SelectItem value="Open Sans">Open Sans</SelectItem>
+                              <SelectItem value="Lato">Lato</SelectItem>
+                              <SelectItem value="Raleway">Raleway</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Tamanho da Fonte</label>
+                          <Select
+                            value={customization.font.fontSize}
+                            onValueChange={(value) => setCustomization({ 
+                              ...customization, 
+                              font: { ...customization.font, fontSize: value }
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="small">Pequeno</SelectItem>
+                              <SelectItem value="medium">Médio (Padrão)</SelectItem>
+                              <SelectItem value="large">Grande</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {customFont.enabled && (
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Família da Fonte</label>
-                      <Select
-                        value={customFont.fontFamily}
-                        onValueChange={(value) => setCustomFont({ ...customFont, fontFamily: value })}
+                  {/* Color Customization */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold">🎨 Cores Personalizadas</label>
+                      <Button
+                        variant={customization.colors.enabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCustomization({ 
+                          ...customization, 
+                          colors: { ...customization.colors, enabled: !customization.colors.enabled }
+                        })}
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Inter">Inter (Padrão)</SelectItem>
-                          <SelectItem value="Roboto">Roboto</SelectItem>
-                          <SelectItem value="Poppins">Poppins</SelectItem>
-                          <SelectItem value="Montserrat">Montserrat</SelectItem>
-                          <SelectItem value="Open Sans">Open Sans</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        {customization.colors.enabled ? "Ativada" : "Desativada"}
+                      </Button>
                     </div>
-                  )}
+
+                    {customization.colors.enabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Cor Primária</label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="color"
+                              value={customization.colors.primaryColor}
+                              onChange={(e) => setCustomization({ 
+                                ...customization, 
+                                colors: { ...customization.colors, primaryColor: e.target.value }
+                              })}
+                              className="w-20 h-10"
+                            />
+                            <Input
+                              type="text"
+                              value={customization.colors.primaryColor}
+                              onChange={(e) => setCustomization({ 
+                                ...customization, 
+                                colors: { ...customization.colors, primaryColor: e.target.value }
+                              })}
+                              placeholder="#8B5CF6"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Cor de Destaque</label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="color"
+                              value={customization.colors.accentColor}
+                              onChange={(e) => setCustomization({ 
+                                ...customization, 
+                                colors: { ...customization.colors, accentColor: e.target.value }
+                              })}
+                              className="w-20 h-10"
+                            />
+                            <Input
+                              type="text"
+                              value={customization.colors.accentColor}
+                              onChange={(e) => setCustomization({ 
+                                ...customization, 
+                                colors: { ...customization.colors, accentColor: e.target.value }
+                              })}
+                              placeholder="#10B981"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Theme Mode */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <label className="text-sm font-semibold">🌓 Modo de Tema Padrão</label>
+                    <Select
+                      value={customization.theme.defaultMode}
+                      onValueChange={(value) => setCustomization({ 
+                        ...customization, 
+                        theme: { ...customization.theme, defaultMode: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light">Claro</SelectItem>
+                        <SelectItem value="dark">Escuro (Padrão)</SelectItem>
+                        <SelectItem value="system">Sistema</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <Button
                     onClick={handleSaveCustomization}
                     className="w-full bg-primary hover:bg-primary/90"
                   >
-                    Salvar Customização
+                    Salvar Todas as Customizações
                   </Button>
                 </div>
               </div>
