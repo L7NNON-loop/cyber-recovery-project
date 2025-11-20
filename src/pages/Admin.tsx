@@ -94,8 +94,20 @@ const Admin = () => {
       const snapshot = await get(maintenanceRef);
       if (snapshot.exists()) {
         const data = snapshot.val();
-        // Load the most recent maintenance config
-        if (data.aviator2) setMaintenanceData(prev => ({ ...prev, ...data.aviator2, target: "aviator2" }));
+        console.log("Maintenance data from Firebase:", data);
+        // Load the most recent maintenance config based on current target
+        const target = maintenanceData.target || "aviator2";
+        if (data[target]) {
+          const config = data[target];
+          setMaintenanceData({
+            enabled: Boolean(config.enabled),
+            target: target,
+            reason: config.reason || "Melhorias no Sistema",
+            message: config.message || "Estamos realizando manutenções.",
+            endTime: config.endTime || new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+            imageUrl: config.imageUrl || ""
+          });
+        }
       }
     } catch (error) {
       console.error("Error loading maintenance:", error);
@@ -148,22 +160,27 @@ const Admin = () => {
   const handleSaveMaintenance = async () => {
     try {
       const targets = maintenanceData.target === "all" 
-        ? ["aviator1", "aviator2", "mines"] 
+        ? ["aviator1", "aviator2", "mines"]
         : [maintenanceData.target];
 
+      console.log("Saving maintenance with enabled:", maintenanceData.enabled, "type:", typeof maintenanceData.enabled);
+
       for (const target of targets) {
-        await set(ref(database, `maintenance/${target}`), {
-          enabled: Boolean(maintenanceData.enabled), // Ensure it's a boolean
+        const dataToSave = {
+          enabled: Boolean(maintenanceData.enabled),
           reason: maintenanceData.reason,
           message: maintenanceData.message,
           endTime: maintenanceData.endTime,
           imageUrl: maintenanceData.imageUrl
-        });
+        };
+        
+        console.log(`Saving to ${target}:`, dataToSave);
+        await set(ref(database, `maintenance/${target}`), dataToSave);
       }
 
       toast({
         title: "Manutenção Atualizada",
-        description: `Configurações salvas para ${maintenanceData.target}`,
+        description: `Status: ${maintenanceData.enabled ? "ATIVADO" : "DESATIVADO"} - ${maintenanceData.target}`,
       });
       
       // Reload maintenance settings to confirm save
@@ -588,22 +605,45 @@ const Admin = () => {
                 <Separator />
                 
                 <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Status da Manutenção</label>
-                    <Button
-                      variant={maintenanceData.enabled ? "destructive" : "default"}
-                      size="sm"
-                      onClick={() => setMaintenanceData({ ...maintenanceData, enabled: !maintenanceData.enabled })}
-                    >
-                      {maintenanceData.enabled ? "Desativar" : "Ativar"}
-                    </Button>
+                  {/* Status Visual Indicator */}
+                  <div className="bg-card border-2 border-primary/20 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full ${maintenanceData.enabled ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
+                        <span className="text-sm font-bold">
+                          Status: <span className={maintenanceData.enabled ? 'text-red-500' : 'text-green-500'}>
+                            {maintenanceData.enabled ? 'ATIVO' : 'DESATIVADO'}
+                          </span>
+                        </span>
+                      </div>
+                      <Button
+                        variant={maintenanceData.enabled ? "destructive" : "default"}
+                        size="sm"
+                        onClick={() => {
+                          const newValue = !maintenanceData.enabled;
+                          console.log("Toggling maintenance to:", newValue);
+                          setMaintenanceData({ ...maintenanceData, enabled: newValue });
+                        }}
+                      >
+                        {maintenanceData.enabled ? "Desativar" : "Ativar"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {maintenanceData.enabled 
+                        ? "⚠️ Usuários não poderão acessar as páginas em manutenção" 
+                        : "✅ Sistema operando normalmente"}
+                    </p>
                   </div>
 
                   <div>
                     <label className="text-sm font-medium mb-2 block">Aplicar Em:</label>
                     <Select
                       value={maintenanceData.target}
-                      onValueChange={(value) => setMaintenanceData({ ...maintenanceData, target: value })}
+                      onValueChange={(value) => {
+                        setMaintenanceData({ ...maintenanceData, target: value });
+                        // Reload settings for the new target
+                        setTimeout(loadMaintenanceSettings, 100);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
