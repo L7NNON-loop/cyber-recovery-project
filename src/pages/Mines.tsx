@@ -46,10 +46,19 @@ const Mines = () => {
         // Check maintenance status
         const maintenanceRef = ref(database, "maintenance/mines");
         const maintenanceSnapshot = await get(maintenanceRef);
+        console.log("Mines - Checking maintenance:", maintenanceSnapshot.exists());
         if (maintenanceSnapshot.exists()) {
           const maintenanceConfig = maintenanceSnapshot.val();
+          console.log("Mines - Maintenance config:", maintenanceConfig);
+          console.log("Mines - Enabled value:", maintenanceConfig.enabled, "Type:", typeof maintenanceConfig.enabled);
+          
+          // Check if enabled is true
           if (maintenanceConfig.enabled === true) {
+            console.log("Mines - Setting maintenance mode ON");
             setMaintenance(maintenanceConfig);
+          } else {
+            console.log("Mines - Maintenance is OFF");
+            setMaintenance(null);
           }
         }
 

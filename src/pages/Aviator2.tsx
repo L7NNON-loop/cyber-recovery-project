@@ -50,10 +50,19 @@ const Aviator2 = () => {
         // Check maintenance status
         const maintenanceRef = ref(database, "maintenance/aviator2");
         const maintenanceSnapshot = await get(maintenanceRef);
+        console.log("Aviator2 - Checking maintenance:", maintenanceSnapshot.exists());
         if (maintenanceSnapshot.exists()) {
           const maintenanceConfig = maintenanceSnapshot.val();
+          console.log("Aviator2 - Maintenance config:", maintenanceConfig);
+          console.log("Aviator2 - Enabled value:", maintenanceConfig.enabled, "Type:", typeof maintenanceConfig.enabled);
+          
+          // Check if enabled is true
           if (maintenanceConfig.enabled === true) {
+            console.log("Aviator2 - Setting maintenance mode ON");
             setMaintenance(maintenanceConfig);
+          } else {
+            console.log("Aviator2 - Maintenance is OFF");
+            setMaintenance(null);
           }
         }
 
