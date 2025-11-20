@@ -58,6 +58,17 @@ export const useCustomization = () => {
             document.documentElement.style.setProperty('--primary', hexToHSL(data.colors.primaryColor));
             document.documentElement.style.setProperty('--accent', hexToHSL(data.colors.accentColor));
           }
+          
+          // Apply theme
+          if (data.theme?.defaultMode) {
+            if (data.theme.defaultMode === "light") {
+              document.documentElement.classList.remove("dark");
+              document.documentElement.classList.add("light");
+            } else {
+              document.documentElement.classList.remove("light");
+              document.documentElement.classList.add("dark");
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading customization:', error);

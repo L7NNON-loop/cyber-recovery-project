@@ -153,7 +153,7 @@ const Admin = () => {
 
       for (const target of targets) {
         await set(ref(database, `maintenance/${target}`), {
-          enabled: maintenanceData.enabled,
+          enabled: Boolean(maintenanceData.enabled), // Ensure it's a boolean
           reason: maintenanceData.reason,
           message: maintenanceData.message,
           endTime: maintenanceData.endTime,
@@ -165,7 +165,11 @@ const Admin = () => {
         title: "Manutenção Atualizada",
         description: `Configurações salvas para ${maintenanceData.target}`,
       });
+      
+      // Reload maintenance settings to confirm save
+      await loadMaintenanceSettings();
     } catch (error) {
+      console.error("Error saving maintenance:", error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar configurações",
@@ -228,12 +232,22 @@ const Admin = () => {
         document.documentElement.style.removeProperty('--primary');
         document.documentElement.style.removeProperty('--accent');
       }
+      
+      // Apply theme
+      if (customization.theme.defaultMode === "light") {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.add("light");
+      } else {
+        document.documentElement.classList.remove("light");
+        document.documentElement.classList.add("dark");
+      }
 
       toast({
         title: "Customização Salva",
         description: "Alterações visuais aplicadas com sucesso",
       });
     } catch (error) {
+      console.error("Error saving customization:", error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar customização",
