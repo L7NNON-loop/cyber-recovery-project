@@ -107,10 +107,26 @@ const Admin = () => {
       const customRef = ref(database, "customization");
       const snapshot = await get(customRef);
       if (snapshot.exists()) {
-        setCustomization(snapshot.val() || customization);
+        const data = snapshot.val();
+        // Merge Firebase data with default values to ensure all properties exist
+        const mergedCustomization = {
+          font: {
+            enabled: data.font?.enabled || false,
+            fontFamily: data.font?.fontFamily || "Inter",
+            fontSize: data.font?.fontSize || "medium"
+          },
+          colors: {
+            enabled: data.colors?.enabled || false,
+            primaryColor: data.colors?.primaryColor || "#8B5CF6",
+            accentColor: data.colors?.accentColor || "#10B981"
+          },
+          theme: {
+            defaultMode: data.theme?.defaultMode || "dark"
+          }
+        };
+        setCustomization(mergedCustomization);
         
         // Apply customizations
-        const data = snapshot.val();
         if (data.font?.enabled) {
           document.documentElement.style.fontFamily = data.font.fontFamily;
           if (data.font.fontSize === "small") {
